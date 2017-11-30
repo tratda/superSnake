@@ -25,9 +25,12 @@ void singleplay(int row, int col){
 	char direction = 0;
 	char frup = 1;
 	char fruit = '&';
-	int fruitloc[2];
+	char superfruit = '$';
+	int fruitloc[2],supfruitloc[2];
 	long score = 0;
 	long life = 100;
+	int supfruittimer = 0;
+	char supfrup = 0;
 	halfdelay(1);
 	keypad(stdscr, TRUE);	
 	WINDOW *score_win;
@@ -84,10 +87,10 @@ void singleplay(int row, int col){
 		
 		body_loc[0][0] = pos[0]; //Move head
 		body_loc[0][1] = pos[1];
-		if((pos[0] == 0)|(pos[0] == col)|(pos[1] == 0)|(pos[1] == (row - 20))){
+		if((pos[0] == 0)|(pos[0] == col)|(pos[1] == 0)|(pos[1] == (row - 20))){ //Check if hit wall
 			lose = 1; //Check if hit wall
 		}
-		for(int i = length; i > 0; i--){
+		for(int i = length; i > 0; i--){ 
 			if((body_loc[i][0] == pos[0])&&(body_loc[i][1] == pos[1])){ // Check if hit self
 				lose = 1;
 				break;
@@ -102,23 +105,42 @@ void singleplay(int row, int col){
 		}
 		
 
-		if(!(frup)){
+		if(!(frup)){ //if fruit isn't present aka has been eaten
 	
-			body_loc[length][0] = body_loc[length-1][0];
-			body_loc[length][1] = body_loc[length-1][1];			
-			fruitloc[0] = (rand()%(col-3))+1;
+			body_loc[length][0] = body_loc[length-1][0]; //Increase the length by one
+			body_loc[length][1] = body_loc[length-1][1]; //due to the eaten fruit
+			fruitloc[0] = (rand()%(col-3))+1; //randomly select a new location for fruit
 			fruitloc[1] = (rand()%(row-23))+1;
-			frup = 1;
+			frup = 1; //fruit on board set to true
 		}
-		if((fruitloc[0] == pos[0])&&(fruitloc[1]== pos[1])){
-			frup = 0;
-			length += 1;
-			life +=  50-length;
-			score += 10;
+		if((fruitloc[0] == pos[0])&&(fruitloc[1]== pos[1])){ //if fruit eaten
+			frup = 0; //set fruit on board to false
+			length += 1; //incease length
+			life +=  50-length; //increase health
+			score += 10; //increase score
 		}
-			//mvwprintw(game_win,0,0,"%d", length);
-		
-		mvwprintw(game_win,fruitloc[0],fruitloc[1], "%c", fruit);
+		if((score%25==0)&&(supfrup==0)&&(score > 0)){
+			supfruitloc[0] = (rand()%(col-3))+1; //randomly select a new location for fruit
+			supfruitloc[1] = (rand()%(row-23))+1;
+			supfruittimer = 25;
+			supfrup = 1; 
+		}
+		if((supfruitloc[0] == pos[0])&&(supfruitloc[1]== pos[1])){ //if super fruit eaten
+			supfrup = 0; //set super fruit on board to false
+			length += 1; //incease length
+			life +=  100-length*2; //increase health
+			score += 60; //increase score
+		}
+		if((supfruittimer==0)&&(supfrup==1)){
+			supfruitloc[0] = (rand()%(col-3))+1; //randomly select a new location for  super fruit
+			supfruitloc[1] = (rand()%(row-23))+1;
+			supfruittimer = 25; //reset the super fruit move timer
+		}
+		if(supfruittimer>0){
+			supfruittimer--; // reduce the superfruit move timer
+		}
+		mvwprintw(game_win,supfruitloc[0],supfruitloc[1],"%c",superfruit); //print superfruit
+		mvwprintw(game_win,fruitloc[0],fruitloc[1], "%c", fruit); //print fruit
 		mvwprintw(game_win,pos[0], pos[1], "%c", head);
 			
 	}
