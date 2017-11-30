@@ -26,6 +26,8 @@ void singleplay(int row, int col){
 	char frup = 1;
 	char fruit = '&';
 	int fruitloc[2];
+	long score = 0;
+	long life = 100;
 	halfdelay(1);
 	keypad(stdscr, TRUE);	
 	WINDOW *score_win;
@@ -33,12 +35,20 @@ void singleplay(int row, int col){
 	score_win = create_new_win(col,19,0,row-20);
 	wrefresh(game_win);
 	wrefresh(score_win);
-	length = 0;
+	length = 3;
 	fruitloc[0] = rand()%(col-1);
 	fruitloc[1] = rand()%(row-21);
 	
 	while(!(lose)) {
 		wrefresh(game_win);  //Refresh the screen
+		mvwprintw(score_win,1,1,"Health: % 8d",life);
+		mvwprintw(score_win,2,1,"Score: % 8d",score);
+		life--;
+		//score++;
+		if(life==0){
+			lose=1;
+		}
+		wrefresh(score_win);
 		werase(game_win);
 		box(game_win,0,0);
 		if((ch = getch())!= ERR){ // Read user direction
@@ -77,32 +87,11 @@ void singleplay(int row, int col){
 		if((pos[0] == 0)|(pos[0] == col)|(pos[1] == 0)|(pos[1] == (row - 20))){
 			lose = 1; //Check if hit wall
 		}
-		if(!(frup)){
-	
-			for(int i = 2; i <= length; i++){
-				if((body_loc[i][0] == pos[0])&&(body_loc[i][1] == pos[1])){ // Check if hit self
-					lose = 1;
-					break;
-				}
-				body_loc[i][0] = body_loc[i][0];
-				body_loc[i][1] = body_loc[i][1];
-				
-				mvwprintw(game_win,body_loc[i][0],body_loc[i][1], "%c",body);
-			
+		for(int i = length; i > 0; i--){
+			if((body_loc[i][0] == pos[0])&&(body_loc[i][1] == pos[1])){ // Check if hit self
+				lose = 1;
+				break;
 			}
-			body_loc[length][0] = body_loc[length-1][0];
-			body_loc[length][1] = body_loc[length-1][1];			
-			fruitloc[0] = rand()%(col-1);
-			fruitloc[1] = rand()%(row-21);
-			frup = 1;
-		}
-		else{
-	
-			for(int i = 1; i <= length; i++){
-				if((body_loc[i][0] == pos[0])&&(body_loc[i][1] == pos[1])){ // Check if hit self
-					lose = 1;
-					break;
-				}
 				//wprintw(game_win,"%d", length);
 				body_loc[i][0] = body_loc[i-1][0];
 				body_loc[i][1] = body_loc[i-1][1];
@@ -110,12 +99,22 @@ void singleplay(int row, int col){
 				//wprintw(game_win,"%d",i);
 				//getch();
 			
-			}
+		}
 		
+
+		if(!(frup)){
+	
+			body_loc[length][0] = body_loc[length-1][0];
+			body_loc[length][1] = body_loc[length-1][1];			
+			fruitloc[0] = (rand()%(col-3))+1;
+			fruitloc[1] = (rand()%(row-23))+1;
+			frup = 1;
 		}
 		if((fruitloc[0] == pos[0])&&(fruitloc[1]== pos[1])){
 			frup = 0;
 			length += 1;
+			life +=  50-length;
+			score += 10;
 		}
 			//mvwprintw(game_win,0,0,"%d", length);
 		
