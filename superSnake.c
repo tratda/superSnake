@@ -57,17 +57,25 @@ void singleplay(int row, int col){
 		if((ch = getch())!= ERR){ // Read user direction
 			switch(ch){
 				case KEY_LEFT:
+					if(direction!=1){
 					direction = 3;
 					break;
+					}
 				case KEY_DOWN:
+					if(direction!=0){
 					direction = 2;
 					break;
+					}
 				case KEY_RIGHT:
+					if(direction!=3){
 					direction = 1;
 					break;
+					}
 				case KEY_UP:
+					if(direction!=2){
 					direction = 0;
 					break;
+					}
 			}
 		}
 		switch(direction){ //Move
