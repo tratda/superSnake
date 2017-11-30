@@ -13,7 +13,7 @@ WINDOW *create_new_win(int height, int width, int starty, int startx){
 }
 
 
-void singleplay(int row, int col){
+int singleplay(int row, int col, char* name){
 	char body = '#';
 	char head = '0';
 	WINDOW *game_win;
@@ -59,23 +59,23 @@ void singleplay(int row, int col){
 				case KEY_LEFT:
 					if(direction!=1){
 					direction = 3;
-					break;
 					}
+					break;
 				case KEY_DOWN:
 					if(direction!=0){
 					direction = 2;
-					break;
 					}
+					break;
 				case KEY_RIGHT:
 					if(direction!=3){
 					direction = 1;
-					break;
 					}
+					break;
 				case KEY_UP:
 					if(direction!=2){
 					direction = 0;
-					break;
 					}
+					break;
 			}
 		}
 		switch(direction){ //Move
@@ -152,7 +152,17 @@ void singleplay(int row, int col){
 		mvwprintw(game_win,pos[0], pos[1], "%c", head);
 			
 	}
-	
+	werase(game_win);
+	mvwprintw(game_win, (col)/2, (row-strlen(name)-30)/2-20 , "Congrats %s you got a score of % 4d",name, score);
+	mvwprintw(game_win, (col)/2 + 1, (row- 31)/2-20, "Press q to quit or r to restart.");
+	wrefresh(game_win);
+	while((fruit = getch()) != 'q' && ((fruit = getch())!='r')){
+	       wrefresh(game_win);
+	}
+	if(fruit=='r'){
+		singleplay(row, col, name);
+	}
+	return 0;
 }
 
 int main(){
@@ -171,7 +181,7 @@ int main(){
 	cbreak();
 	curs_set(0);
 	refresh();
-
+	int status;
 	main_screen = create_new_win((LINES),(COLS),0,0);
 	//wprintw("%s", name_grab);
 	mvwprintw(main_screen, LINES/2,(COLS-strlen(name_grab))/2, "%s", name_grab);
@@ -183,14 +193,17 @@ int main(){
 	mvwprintw(main_screen,row/2,(col-strlen(name)-8)/2 , "Welcome %s",name);
 	mvwprintw(main_screen,row/2+1,(col-strlen(game_choice))/2, "%s",game_choice); 
 	mvwprintw(main_screen,row/2+2,(col-strlen(single))/2,"%s",single);
-	mvwprintw(main_screen,row/2+3,(col-strlen(single))/2,"%s",multi);
+//	mvwprintw(main_screen,row/2+3,(col-strlen(single))/2,"%s",multi);
 	wrefresh(main_screen);
 	
 	input = getch();
 	if(input=='1'){
 		werase(main_screen);
 		delwin(main_screen);
-		singleplay(col,row);
+		status = singleplay(col,row,name);
+		if(status==1){
+			status = singleplay(col,row,name);
+		}
 
 	}
 	endwin();
