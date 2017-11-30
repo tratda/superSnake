@@ -37,7 +37,7 @@ void singleplay(int row, int col){
 	fruitloc[0] = rand()%(col-1);
 	fruitloc[1] = rand()%(row-21);
 	
-	while(!(lose)){
+	while(!(lose)) {
 		wrefresh(game_win);  //Refresh the screen
 		werase(game_win);
 		box(game_win,0,0);
