@@ -3,6 +3,7 @@
 #include<ncurses.h>
 #include<netinet/in.h>
 #include<time.h>
+#include<math.h>
 
 #define HEAD '0'
 #define BODY '#'
@@ -20,9 +21,10 @@ WINDOW *create_new_win(int height, int width, int starty, int startx){
 
 void singleplay(int row, int col, char* name){
 	WINDOW *game_win;
-	int body_loc[1000][2];
+	int body_loc[1000][2] = {0};
 	int length;
 	int pos[2] = {col/2,(row-20)/2};
+	int xdif,ydif;
 	char lose = 0;
 	short ch;
 	char direction = 0;
@@ -96,7 +98,7 @@ void singleplay(int row, int col, char* name){
 		
 		body_loc[0][0] = pos[0]; //Move head
 		body_loc[0][1] = pos[1];
-		if((pos[0] == 1)|(pos[0] == col-1)|(pos[1] == 1)|(pos[1] == (row - 21))){ //Check if hit wall
+		if((pos[0] == 0)|(pos[0] == col-1)|(pos[1] == 0)|(pos[1] == (row - 21))){ //Check if hit wall
 			lose = 1; //Check if hit wall
 		}
 		for(int i = length; i > 0; i--){ 
@@ -117,14 +119,17 @@ void singleplay(int row, int col, char* name){
 	
 			body_loc[length][0] = body_loc[length-1][0]; //Increase the length by one
 			body_loc[length][1] = body_loc[length-1][1]; //due to the eaten fruit
-			fruitloc[0] = (rand()%(col-3))+1; //randomly select a new location for fruit
-			fruitloc[1] = (rand()%(row-23))+1;
+			fruitloc[0] = (rand()%(col-4))+2; //randomly select a new location for fruit
+			fruitloc[1] = (rand()%(row-24))+2;
+			xdif = abs(fruitloc[0]-pos[0]);
+			ydif = abs(fruitloc[1]-pos[1]);
+			life = life + xdif + ydif;
 			frup = 1; //fruit on board set to true
 		}
 		if((fruitloc[0] == pos[0])&&(fruitloc[1]== pos[1])){ //if fruit eaten
 			frup = 0; //set fruit on board to false
 			length += 1; //incease length
-			life +=  50-length*2; //increase health
+			life +=  40-length*2; //increase health
 			score += 10; //increase score
 		}
 		if((score%25==0)&&(supfrup==0)&&(score > 0)){
@@ -155,6 +160,7 @@ void singleplay(int row, int col, char* name){
 		mvwprintw(game_win,fruitloc[0],fruitloc[1], "%c", FRUIT); //print fruit
 		mvwprintw(game_win,pos[0], pos[1], "%c", HEAD);		
 	}
+	wrefresh(game_win);
 	werase(game_win);
 	mvwprintw(game_win, (col)/2, (row-strlen(name)-30)/2-20 , "Congrats %s you got a score of % 4d",name, score);
 	mvwprintw(game_win, (col)/2 + 1, (row- 31)/2-20, "Press c to continue.");
