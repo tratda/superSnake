@@ -18,7 +18,9 @@ WINDOW *create_new_win(int height, int width, int starty, int startx){
 }
 
 
-int singleplay(int row, int col, char* name){
+void singleplay(int row, int col, char* name){
+	char body = '#';
+	char head = '0';
 	WINDOW *game_win;
 	int body_loc[1000][2];
 	int length;
@@ -153,22 +155,29 @@ int singleplay(int row, int col, char* name){
 	}
 	werase(game_win);
 	mvwprintw(game_win, (col)/2, (row-strlen(name)-30)/2-20 , "Congrats %s you got a score of % 4d",name, score);
-	mvwprintw(game_win, (col)/2 + 1, (row- 31)/2-20, "Press q to quit or r to restart.");
+	mvwprintw(game_win, (col)/2 + 1, (row- 31)/2-20, "Press c to continue.");
 	wrefresh(game_win);
-	while((FRUIT = getch()) != 'q' && ((FRUIT = getch())!='r')){
+
+	while((fruit = getch()) != 'c'){
 	       wrefresh(game_win);
 	}
-	if(FRUIT=='r'){
-		singleplay(row, col, name);
-	}
-	return 0;
+	return;
+
 }
 
-int main(){
-	char name_grab[] = "What is your name? ";
+WINDOW * main_options(WINDOW * screen, int row, int col, char name[100]){
 	char game_choice[] = "What game would you like to play?";
 	char single[] = "1. Singleplayer";
-	char multi[] = "2. Multiplayer";
+	char multi[] = "2. Multiplayer";	
+	mvwprintw(screen,row/2,(col-strlen(name)-8)/2 , "Welcome %s",name);
+	mvwprintw(screen,row/2+1,(col-strlen(game_choice))/2, "%s",game_choice); 
+	mvwprintw(screen,row/2+2,(col-strlen(single))/2,"%s",single);
+//	mvwprintw(screen,row/2+3,(col-strlen(single))/2,"%s",multi);
+	mvwprintw(screen,row/2+3,(col-strlen(single))/2,"3. Quit");
+	return screen;
+}
+int main(){
+	char name_grab[] = "What is your name? ";
 	char name[100];
 	char input;
 	WINDOW *main_screen;
@@ -180,7 +189,6 @@ int main(){
 	cbreak();
 	curs_set(0);
 	refresh();
-	int status;
 	main_screen = create_new_win((LINES),(COLS),0,0);
 	//wprintw("%s", name_grab);
 	mvwprintw(main_screen, LINES/2,(COLS-strlen(name_grab))/2, "%s", name_grab);
@@ -188,22 +196,27 @@ int main(){
 
 	wgetstr(main_screen, name);
 	werase(main_screen);
-	box(main_screen,0,0);	
-	mvwprintw(main_screen,row/2,(col-strlen(name)-8)/2 , "Welcome %s",name);
-	mvwprintw(main_screen,row/2+1,(col-strlen(game_choice))/2, "%s",game_choice); 
-	mvwprintw(main_screen,row/2+2,(col-strlen(single))/2,"%s",single);
-//	mvwprintw(main_screen,row/2+3,(col-strlen(single))/2,"%s",multi);
+	box(main_screen,0,0);
+	main_screen = main_options(main_screen, row, col, name);	
 	wrefresh(main_screen);
 	
-	input = getch();
-	if(input=='1'){
-		werase(main_screen);
-		delwin(main_screen);
-		status = singleplay(col,row,name);
-		if(status==1){
-			status = singleplay(col,row,name);
+	while((input = getch())){
+		switch(input){
+			case '1':
+				werase(main_screen);
+				delwin(main_screen);
+				singleplay(col,row,name);
+				break;
+			case '3':
+				endwin();
+				return 0;
+			default:	
+				werase(main_screen);
+				mvwprintw(main_screen,row/2-1,(col-18)/2 , "That is not an option.");
+				main_screen = main_options(main_screen, row, col, name);
+				wrefresh(main_screen);
+				break;
 		}
-
 	}
-	endwin();
 }
+
