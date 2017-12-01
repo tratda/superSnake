@@ -105,7 +105,7 @@ int singleplay(int row, int col, char* name){
 				break;
 			}
 				//wprintw(game_win,"%d", length);
-				body_loc[i][0] = body_loc[i-1][0]
+				body_loc[i][0] = body_loc[i-1][0];
 				body_loc[i][1] = body_loc[i-1][1];
 				mvwprintw(game_win,body_loc[i+1][0],body_loc[i+1][1], "%c",BODY);
 				//wprintw(game_win,"%d",i);
