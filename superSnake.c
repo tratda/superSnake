@@ -4,6 +4,11 @@
 #include<netinet/in.h>
 #include<time.h>
 
+#define HEAD '0'
+#define BODY '#'
+#define FRUIT '&'
+#define SUPERFRUIT '$'
+
 WINDOW *create_new_win(int height, int width, int starty, int startx){
 	WINDOW *local_win;
 	local_win = newwin(height,width,starty,startx);
@@ -24,8 +29,6 @@ void singleplay(int row, int col, char* name){
 	short ch;
 	char direction = 0;
 	char frup = 1;
-	char fruit = '&';
-	char superfruit = '$';
 	int fruitloc[2],supfruitloc[2];
 	long score = 0;
 	long life = 100;
@@ -106,13 +109,12 @@ void singleplay(int row, int col, char* name){
 				//wprintw(game_win,"%d", length);
 				body_loc[i][0] = body_loc[i-1][0];
 				body_loc[i][1] = body_loc[i-1][1];
-				mvwprintw(game_win,body_loc[i+1][0],body_loc[i+1][1], "%c",body);
+				mvwprintw(game_win,body_loc[i+1][0],body_loc[i+1][1], "%c",BODY);
 				//wprintw(game_win,"%d",i);
 				//getch();
 			
 		}
 		
-
 		if(!(frup)){ //if fruit isn't present aka has been eaten
 	
 			body_loc[length][0] = body_loc[length-1][0]; //Increase the length by one
@@ -147,19 +149,20 @@ void singleplay(int row, int col, char* name){
 		if(supfruittimer>0){
 			supfruittimer--; // reduce the superfruit move timer
 		}
-		mvwprintw(game_win,supfruitloc[0],supfruitloc[1],"%c",superfruit); //print superfruit
-		mvwprintw(game_win,fruitloc[0],fruitloc[1], "%c", fruit); //print fruit
-		mvwprintw(game_win,pos[0], pos[1], "%c", head);
-			
+		mvwprintw(game_win,supfruitloc[0],supfruitloc[1],"%c",SUPERFRUIT); //print superfruit
+		mvwprintw(game_win,fruitloc[0],fruitloc[1], "%c", FRUIT); //print fruit
+		mvwprintw(game_win,pos[0], pos[1], "%c", HEAD);		
 	}
 	werase(game_win);
 	mvwprintw(game_win, (col)/2, (row-strlen(name)-30)/2-20 , "Congrats %s you got a score of % 4d",name, score);
 	mvwprintw(game_win, (col)/2 + 1, (row- 31)/2-20, "Press c to continue.");
 	wrefresh(game_win);
+
 	while((fruit = getch()) != 'c'){
 	       wrefresh(game_win);
 	}
 	return;
+
 }
 
 WINDOW * main_options(WINDOW * screen, int row, int col, char name[100]){
