@@ -20,6 +20,7 @@ WINDOW *create_new_win(int height, int width, int starty, int startx){
 
 
 void singleplay(int row, int col, char* name){
+	FILE *scoreboard;
 	WINDOW *game_win;
 	int body_loc[1000][2] = {0};
 	int length;
@@ -30,10 +31,17 @@ void singleplay(int row, int col, char* name){
 	char direction = 0;
 	char frup = 1;
 	int fruitloc[2],supfruitloc[2];
-	long score = 0;
+	int score = 0;
 	long life = 100;
 	int supfruittimer = 0;
 	char supfrup = 0;
+	char first[100];
+	int first_score;
+	char second[100];
+	int second_score;
+	char third[100];
+	int third_score;
+	char scorer[10];
 	halfdelay(1); //sets the screen refresh rate .1s
 	keypad(stdscr, TRUE);	
 	WINDOW *score_win; 
@@ -44,14 +52,28 @@ void singleplay(int row, int col, char* name){
 	length = 3;
 	fruitloc[0] = rand()%(col-1);
 	fruitloc[1] = rand()%(row-21);
-	
+	//Scoreboard
+	scoreboard = fopen("scores.out","w+");
+	fgets(first, 100, scoreboard);
+	fgets(scorer,10, scoreboard);
+	first_score = atoi(scorer);
+	fgets(second, 100, scoreboard);
+	fgets(scorer,10,scoreboard);
+	second_score = atoi(scorer);
+	fgets(third, 100, scoreboard);
+	fgets(scorer,10,scoreboard);
+	third_score = atoi(scorer);
 	while(!(lose)) {
 		wrefresh(game_win);  //Refresh the screen
 		mvwprintw(score_win,1,1,"Health: % 8d",life);
 		mvwprintw(score_win,2,1,"Score: % 8d",score);
+		mvwprintw(score_win,3,1,"High Scores");
+		mvwprintw(score_win,4,1,"%s %d", first, first_score);
+		mvwprintw(score_win,5,1,"%s %d", second, second_score);
+		mvwprintw(score_win,6,1,"%s %d", third, third_score);
 		life--;
 		//score++;
-		if(life==0){
+		if(life<0){
 			lose=1;
 		}
 		wrefresh(score_win);
@@ -129,7 +151,7 @@ void singleplay(int row, int col, char* name){
 		if((fruitloc[0] == pos[0])&&(fruitloc[1]== pos[1])){ //if fruit eaten
 			frup = 0; //set fruit on board to false
 			length += 1; //incease length
-			life +=  40-length*2; //increase health
+			life +=  40+length; //increase health
 			score += 10; //increase score
 		}
 		if((score%25==0)&&(supfrup==0)&&(score > 0)){
@@ -143,7 +165,7 @@ void singleplay(int row, int col, char* name){
 			supfruitloc[0] = 0;
 			supfrup = 0; //set super fruit on board to false
 			length += 1; //incease length
-			life +=  100-length*4; //increase health
+			life +=  100+length; //increase health
 			score += 60; //increase score
 		}
 		if((supfruittimer==0)&&(supfrup==1)){
