@@ -10,6 +10,13 @@
 #define FRUIT '&'
 #define SUPERFRUIT '$'
 
+
+struct score_record {
+	char name[10];
+	int score;
+}
+
+
 WINDOW *create_new_win(int height, int width, int starty, int startx){
 	WINDOW *local_win;
 	local_win = newwin(height,width,starty,startx);
@@ -17,6 +24,8 @@ WINDOW *create_new_win(int height, int width, int starty, int startx){
 	wrefresh(local_win);
 	return local_win;
 }
+
+
 
 
 void singleplay(int row, int col, char* name){
@@ -35,13 +44,10 @@ void singleplay(int row, int col, char* name){
 	long life = 100;
 	int supfruittimer = 0;
 	char supfrup = 0;
-	char first[100];
+	char first[10];
 	int first_score;
-	char second[100];
-	int second_score;
-	char third[100];
-	int third_score;
 	char scorer[10];
+	char loc = 4;
 	halfdelay(1); //sets the screen refresh rate .1s
 	keypad(stdscr, TRUE);	
 	WINDOW *score_win; 
@@ -53,24 +59,36 @@ void singleplay(int row, int col, char* name){
 	fruitloc[0] = rand()%(col-1);
 	fruitloc[1] = rand()%(row-21);
 	//Scoreboard
-	scoreboard = fopen("scores.out","w+");
-	fgets(first, 100, scoreboard);
+	scoreboard = fopen("scores.board","r");
+	while(fgets(first,100,scoreboard)!=NULL){
+		first[strcspn(first,"\n")] = 0;
+		if(fgets(scorer,10,scoreboard)!=NULL){
+			first_score = atoi(scorer);
+			mvwprintw(score_win,loc,1, "%-8s:%5d",first,first_score);
+
+			loc++;
+		}
+	}
+	fclose(scoreboard);
+	/*
+	fgets(first, 10, scoreboard);
 	fgets(scorer,10, scoreboard);
 	first_score = atoi(scorer);
-	fgets(second, 100, scoreboard);
+	fgets(second, 10, scoreboard);
 	fgets(scorer,10,scoreboard);
 	second_score = atoi(scorer);
-	fgets(third, 100, scoreboard);
+	fgets(third, 10, scoreboard);
 	fgets(scorer,10,scoreboard);
 	third_score = atoi(scorer);
+	*/
 	while(!(lose)) {
 		wrefresh(game_win);  //Refresh the screen
 		mvwprintw(score_win,1,1,"Health: % 8d",life);
 		mvwprintw(score_win,2,1,"Score: % 8d",score);
 		mvwprintw(score_win,3,1,"High Scores");
-		mvwprintw(score_win,4,1,"%s %d", first, first_score);
-		mvwprintw(score_win,5,1,"%s %d", second, second_score);
-		mvwprintw(score_win,6,1,"%s %d", third, third_score);
+		//mvwprintw(score_win,4,1,"%s %d", first, first_score);
+		//mvwprintw(score_win,5,1,"%s %d", second, second_score);
+		//mvwprintw(score_win,6,1,"%s %d", third, third_score);
 		life--;
 		//score++;
 		if(life<0){
@@ -145,13 +163,13 @@ void singleplay(int row, int col, char* name){
 			fruitloc[1] = (rand()%(row-24))+2;
 			xdif = abs(fruitloc[0]-pos[0]);
 			ydif = abs(fruitloc[1]-pos[1]);
-			life = life + xdif + ydif;
+			life = life + 3*(xdif + ydif);
 			frup = 1; //fruit on board set to true
 		}
 		if((fruitloc[0] == pos[0])&&(fruitloc[1]== pos[1])){ //if fruit eaten
 			frup = 0; //set fruit on board to false
 			length += 1; //incease length
-			life +=  40+length; //increase health
+			//life +=  40+length; //increase health
 			score += 10; //increase score
 		}
 		if((score%25==0)&&(supfrup==0)&&(score > 0)){
