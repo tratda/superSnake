@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define PORT 1234
+#define PORT 1345
 #define BUF_SIZE 2000
 #define CLADDR_LEN 100
 
@@ -123,15 +123,25 @@ void* find_node_on_score(struct score_node ** head_ref, int search_score)
 {
     printf("Attempting to Resort\n");
     struct score_node *last = (*head_ref);
+    printf("%d is search score\n", search_score);
+    printf("%d is the first elm\n", last->score);
+    if(last->score>search_score){
+        printf("Goes to Head\n");
+        return NULL;
+    }
     while((last->score)>=search_score)
     {
         if(last->next == NULL){
-            return NULL;
+            printf("Resorting on %d\n", search_score);
+            printf("%x\n",last);
+            return last;
         }
+        printf("%d is less than %d\n", search_score, last->score);
         last=last->next;
     }
     printf("Resorting on %d\n",search_score);
-    return last;
+    printf("Inserting after %s\n",last->name);
+    return last->prev;
 }
 
 void trim_list(struct score_node ** head_ref)
@@ -166,104 +176,129 @@ void send_list(struct score_node * node, int comm_fd)
         last = last->next;
     }
 }
-        
 
-int main(){
-	char auth_str[50] = "Please Read\n";
-        char control_str[50];
-        char * start_send = "Sending Data";
-        char * end_send = "That's All";
-        char name[50];
-        char scorer[10];
-        char buffer[BUF_SIZE];
-        char clientAddr[CLADDR_LEN];
-        pid_t childpid;
-        char write_str[50] = "Please Write\n";
-	int listen_fd, comm_fd, score, len, ret;
-        FILE * masterboard;
-	struct sockaddr_in servaddr;
-        struct score_node* master_score = NULL;
-        struct loc_node;
-        
-        masterboard = fopen("scores.board","r");
-        while(fgets(name, 10, masterboard)!=NULL){
-            name[strcspn(name,"\n")] = 0;
-            if(fgets(scorer,10,masterboard)!=NULL){
-                score = atoi(scorer);
-                append_score(&master_score, name, score);
-                printf("Read in %s %d\n", name, score);
-            }
-        }
-        fclose(masterboard);
-	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
-	memset(&servaddr, 0, sizeof(servaddr));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_addr.s_addr = htons(INADDR_ANY);
-	servaddr.sin_port = htons(PORT);
-	ret = bind(listen_fd, (struct sockaddr *) &servaddr, sizeof(servaddr));
-        if (ret < 0) {
-            printf("Error binding!\n");
-            exit(1);
-        }
-        printf("Address Bound...\n");
-	listen(listen_fd, 10);
-        while(1){
-            len = sizeof(servaddr);
-	    comm_fd = accept(listen_fd, (struct sockaddr*) &servaddr, &len);
-            if(comm_fd < 0){
-                printf("Error accepting connection!\n");
-                exit(1);
-            }
-            printf("Connection accepted...\n");
-            inet_ntop(AF_INET, &(servaddr.sin_addr),clientAddr, 100);
-            if((childpid = fork()) == 0){
-                close(listen_fd);
-                while(1){
-                    memset(buffer, 0, 2000);
-                    ret = recvfrom(comm_fd, buffer, 2000, 0, (struct sockaddr *) &servaddr, &len);
-                    if(ret < 0) {
-                        printf("Error receiving data!\n");  
-                        exit(1);
-                    }
-                    printf("Received data from %s: %s\n", clientAddr, buffer);
+int score_handler(int comm_fd){
+    int score;
+    char auth_str[50] = "Please Read\n";
+    char control_str[50];
+    char * start_send = "Sending Data";
+    char * end_send = "That's All";
+    char name[50];
+    char scorer[50];
+    char write_str[50] = "Please Write\n";
+    FILE * masterboard;
+    struct score_node* master_score = NULL;
+    struct score_node* last_score = master_score;
+    struct loc_node;
+    void * loc;
 
-                    ret = sendto(comm_fd, buffer, 2000, 0, (struct sockaddr *) &servaddr, len);
-                    if(ret < 0){
-                        printf("Error sending data!\n");
-                        exit(1);
-                    }
-                printf("Sent data to %s: %s\n",clientAddr, buffer);
-                }
-            }
-            close(comm_fd);
+    masterboard = fopen("scores.board","r");
+    while(fgets(name, 10, masterboard)!=NULL){
+        name[strcspn(name,"\n")] = 0;
+        if(fgets(scorer,10,masterboard)!=NULL){
+            score = atoi(scorer);
+            append_score(&master_score, name, score);
+            printf("Read in %s %d\n", name, score);
         }
-}
-/*
-	while(1){
-            bzero (control_str, 50);
-	    read(comm_fd, control_str, 50);
-            if(strcmp(control_str, auth_str)==0)
-            {
-                write(comm_fd, start_send, strlen(start_send)+1);
-                send_list(master_score,comm_fd);
+    }
+    fclose(masterboard);
+    while(1){
+        bzero (control_str, 50);
+	read(comm_fd, control_str, 50);
+        if(strcmp(control_str, auth_str)==0){
+            write(comm_fd, start_send, strlen(start_send)+1);
+                send_list(master_score, comm_fd);
                 /*while(master_score->next!=NULL)
                 {
                     write(comm_fd, master_score->name, strlen(master_score->name)+1);
                     write(comm_fd, itoa(master_score->score),strlen(itoa(master_score->score))+1);
-                } 
+                }*/ 
                 write(comm_fd, end_send, strlen(end_send)+1);
             }
-                if(strcmp(control_str,write_str)==0)
-                {
-                    read(comm_fd,name,10);
-                    name[strcspn(name,"\n")] = '\0';
-                    read(comm_fd,scorer,10);
-                    scorer[strcspn(name,"\n")] = '\0';
-                    score = atoi(scorer);
-                    insert_score(find_node_on_score(&master_score,score),name,score);
-                    trim_list(&master_score);
+            if(strcmp(control_str,write_str)==0){
+                read(comm_fd,name,10);
+                name[strcspn(name,"\n")] = '\0';
+                read(comm_fd,scorer,12);
+                printf("%s",scorer);
+                scorer[strcspn(name,"\n")] = '\0';
+                score = atoi(scorer);  //ERROR: this appears to be set
+                                       //len of score to len of name
+                printf("User %s has score %d",name,score);
+                if((loc = find_node_on_score(&master_score,score))==NULL){
+                    push_score(&master_score,name,score);
                 }
-        }
 
+                else{
+                    insert_score(loc,name,score);
+                }
+                trim_list(&master_score);
+                masterboard = fopen("scores.board","w");
+                last_score = master_score;
+                while((last_score->next)!=NULL){
+                    fputs(last_score->name,masterboard);
+                    fputs("\n",masterboard);
+                    printf("Wrote %s\n",last_score->name);
+                    sprintf(scorer, "%d", last_score->score);
+                    fputs(scorer,masterboard);
+                    fputs("\n",masterboard);
+                    printf("Wrote %s\n",scorer);
+                    last_score = last_score->next;
+                }
+    
+            }
+        }
 }
-*/
+int main(){
+    char buffer[BUF_SIZE];
+    char clientAddr[CLADDR_LEN];
+    pid_t childpid;
+    int listen_fd, comm_fd, len, ret;
+    struct sockaddr_in servaddr;
+    
+    
+    listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+    memset(&servaddr, 0, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htons(INADDR_ANY);
+    servaddr.sin_port = htons(PORT);
+    ret = bind(listen_fd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+    if (ret < 0) {
+        printf("Error binding!\n");
+        exit(1);
+    }
+    printf("Address Bound...\n");
+    listen(listen_fd, 10);
+    while(1){
+        len = sizeof(servaddr);
+        comm_fd = accept(listen_fd, (struct sockaddr*) &servaddr, &len);
+        if(comm_fd < 0){
+            printf("Error accepting connection!\n");
+            exit(1);
+        }
+        printf("Connection accepted...\n");
+        inet_ntop(AF_INET, &(servaddr.sin_addr),clientAddr, 100);
+        if((childpid = fork()) == 0){
+            close(listen_fd);
+            while(1){
+                /*
+                memset(buffer, 0, 2000);
+                ret = recvfrom(comm_fd, buffer, 2000, 0, (struct sockaddr *) &servaddr, &len);
+                if(ret < 0) {
+                    printf("Error receiving data!\n");  
+                    exit(1);
+                }
+                printf("Received data from %s: %s\n", clientAddr, buffer);
+                ret = sendto(comm_fd, buffer, 2000, 0, (struct sockaddr *) &servaddr, len);
+                if(ret < 0){
+                    printf("Error sending data!\n");
+                    exit(1);
+                }
+                */
+                score_handler(comm_fd);
+                printf("Sent data to %s: %s\n",clientAddr, buffer);
+            }
+        }
+        close(comm_fd);
+    }
+}
+
