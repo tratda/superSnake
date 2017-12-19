@@ -4,18 +4,18 @@
 #include<netinet/in.h>
 #include<time.h>
 #include<math.h>
+#include<sys/socket.h>
+#include<sys/types.h>
+#include<netdb.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 #define HEAD '0'
 #define BODY '#'
 #define FRUIT '&'
 #define SUPERFRUIT '$'
-
-
-struct score_record {
-	char name[10];
-	int score;
-}
-
+#define SERVADDR "127.0.0.1"
+#define SERVPORT 1345
 
 WINDOW *create_new_win(int height, int width, int starty, int startx){
 	WINDOW *local_win;
@@ -25,16 +25,15 @@ WINDOW *create_new_win(int height, int width, int starty, int startx){
 	return local_win;
 }
 
-
-
-
+    
 void singleplay(int row, int col, char* name){
 	FILE *scoreboard;
 	WINDOW *game_win;
+        struct sockaddr_in servaddr;
 	int body_loc[1000][2] = {0};
 	int length;
 	int pos[2] = {col/2,(row-20)/2};
-	int xdif,ydif;
+	int xdif,ydif, sockfd,n;
 	char lose = 0;
 	short ch;
 	char direction = 0;
@@ -48,6 +47,8 @@ void singleplay(int row, int col, char* name){
 	int first_score;
 	char scorer[10];
 	char loc = 4;
+        char * reader = "Please Read";
+        char * writer = "Please Write";
 	halfdelay(1); //sets the screen refresh rate .1s
 	keypad(stdscr, TRUE);	
 	WINDOW *score_win; 
@@ -59,6 +60,7 @@ void singleplay(int row, int col, char* name){
 	fruitloc[0] = rand()%(col-1);
 	fruitloc[1] = rand()%(row-21);
 	//Scoreboard
+        /* LOCAL SCOREBOARD
 	scoreboard = fopen("scores.board","r");
 	while(fgets(first,100,scoreboard)!=NULL){
 		first[strcspn(first,"\n")] = 0;
@@ -70,7 +72,6 @@ void singleplay(int row, int col, char* name){
 		}
 	}
 	fclose(scoreboard);
-	/*
 	fgets(first, 10, scoreboard);
 	fgets(scorer,10, scoreboard);
 	first_score = atoi(scorer);
@@ -81,6 +82,28 @@ void singleplay(int row, int col, char* name){
 	fgets(scorer,10,scoreboard);
 	third_score = atoi(scorer);
 	*/
+
+        /*Global Scoreboard */
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        memset(&servaddr, 0, sizeof(servaddr));
+        servaddr.sin_family = AF_INET;
+        servaddr.sin_addr.s_addr = inet_addr(SERVADDR);
+        servaddr.sin_port = htons(SERVPORT);
+        connect(sockfd,(struct sockaddr *)&servaddr,sizeof(servaddr));
+        n = write(sockfd, reader, strlen(reader));
+        printf("Please Read");
+        while(strcmp(first,"That's All")!=0){
+            read(sockfd, first, 10);
+            first[strcspn(first, "\n")] = 0;
+            if(read(sockfd, scorer, 10)!=0){
+                first_score = atoi(scorer);
+                mvwprintw(score_win, loc, 1, "%-8s:%5d",first, first_score);
+                loc++;
+            }
+        }
+        close(sockfd);
+        /* END SCOREBOARD READING */
+
 	while(!(lose)) {
 		wrefresh(game_win);  //Refresh the screen
 		mvwprintw(score_win,1,1,"Health: % 8d",life);
@@ -200,6 +223,23 @@ void singleplay(int row, int col, char* name){
 		mvwprintw(game_win,fruitloc[0],fruitloc[1], "%c", FRUIT); //print fruit
 		mvwprintw(game_win,pos[0], pos[1], "%c", HEAD);		
 	}
+
+
+        /* START SCOREBOARD WRITE */
+        sockfd = socket(AF_INET, SOCK_STREAM,0);
+        memset(&servaddr, 0, sizeof(servaddr));
+        servaddr.sin_family = AF_INET;
+        servaddr.sin_addr.s_addr = inet_addr(SERVADDR);
+        servaddr.sin_port = htons(SERVPORT);
+        connect(sockfd,(struct sockaddr *)&servaddr,sizeof(servaddr));
+        n = write(sockfd, writer, strlen(reader));
+        sprintf(name, "%8s", name);
+        n = write(sockfd, name, strlen(name));
+        sprintf(scorer, "%d",score);
+        n = write(sockfd, scorer, strlen(scorer));
+        close(sockfd);
+        /*END SCOREBOARD READ */
+
 	wrefresh(game_win);
 	werase(game_win);
 	mvwprintw(game_win, (col)/2, (row-strlen(name)-30)/2-20 , "Congrats %s you got a score of % 4d",name, score);

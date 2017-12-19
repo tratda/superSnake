@@ -184,6 +184,7 @@ int score_handler(int comm_fd){
     char * start_send = "Sending Data";
     char * end_send = "That's All";
     char name[50];
+    char name2[50];
     char scorer[50];
     char write_str[50] = "Please Write\n";
     FILE * masterboard;
@@ -195,16 +196,18 @@ int score_handler(int comm_fd){
     masterboard = fopen("scores.board","r");
     while(fgets(name, 10, masterboard)!=NULL){
         name[strcspn(name,"\n")] = 0;
+        sprintf(name2, "%-8s", name);
         if(fgets(scorer,10,masterboard)!=NULL){
             score = atoi(scorer);
-            append_score(&master_score, name, score);
-            printf("Read in %s %d\n", name, score);
+            append_score(&master_score, name2, score);
+            printf("Read in %s:%d\n", name2, score);
         }
     }
     fclose(masterboard);
     while(1){
         bzero (control_str, 50);
 	read(comm_fd, control_str, 50);
+        printf("%s",control_str);
         if(strcmp(control_str, auth_str)==0){
             write(comm_fd, start_send, strlen(start_send)+1);
                 send_list(master_score, comm_fd);
@@ -234,17 +237,17 @@ int score_handler(int comm_fd){
                 trim_list(&master_score);
                 masterboard = fopen("scores.board","w");
                 last_score = master_score;
-                while((last_score->next)!=NULL){
-                    fputs(last_score->name,masterboard);
-                    fputs("\n",masterboard);
+                while((last_score)!=NULL){
+                    fwrite(last_score->name, strlen(last_score->name), 1, masterboard);
+                    fwrite("\n", 1, 1, masterboard);
                     printf("Wrote %s\n",last_score->name);
                     sprintf(scorer, "%d", last_score->score);
-                    fputs(scorer,masterboard);
-                    fputs("\n",masterboard);
+                    fwrite(scorer, strlen(scorer), 1, masterboard);
+                    fwrite("\n",1,1,masterboard);
                     printf("Wrote %s\n",scorer);
                     last_score = last_score->next;
                 }
-    
+                fclose(masterboard);
             }
         }
 }
